@@ -34,21 +34,26 @@ class laboratory:
             return None
     
     def obstruct(self,pos):
-        self.obstruction = pos
+        if not pos in self.invalid_obstruction_positions:
+            self.obstruction = pos
 
     def note_obstruction(self):
         self.good_obstruction_positions.add(self.obstruction)
 
 class guard:
     #lab = laboratory()
-    visited = set([])
-    turned = set([])
     
     def __init__(self, workplace):
         self.lab = workplace
         self.pos = self.lab.guard_init_pos
         self.dir = self.lab.guard_init_dir
+        self.visited = set([])
         self.visited.add(self.pos)
+        self.move = 0
+        self.turned = set([])
+        self.looping = False
+        self.turns = set([])
+        #print("new guard starts")
 
     def patrol(self):
         match self.dir:
@@ -66,7 +71,7 @@ class guard:
                 candidate = self.lab.position_check(newpos)
         
         if candidate == None:
-            #print("guard out, obstruction didn't work")
+            print("FAIL: guard out, obstruction didn't work")
             return False
         elif candidate == "#" or candidate == "O":
             match self.dir:
@@ -74,17 +79,17 @@ class guard:
                 case ">": self.dir = "v"
                 case "v": self.dir = "<"
                 case "<": self.dir = "^"
-            if self.pos in self.turned:
-                self.lab.note_obstruction()
-                #print("frank is looping, rtb frank")
+            if (self.pos, self.dir) in self.turns:
+                lab.note_obstruction()
+                print("FOUND loop, rtbing frank")
                 return False
+            self.turns.add((self.pos, self.dir))
             self.turned.add(self.pos)
             return True
         elif candidate == ".":
             self.pos = newpos
             self.visited.add(newpos)
-            if self.turned == set():
-                self.lab.invalid_obstruction_positions.add(newpos)
+            self.move += 1
             return True
 
 lab = laboratory()
@@ -93,13 +98,8 @@ while brian.patrol():
     pass
 possible_obstruction_positions = brian.visited.copy()
 for pos in possible_obstruction_positions:
-    #print(pos)
     frank = guard(lab)
     lab.obstruct(pos)
     while frank.patrol():
         pass
-print(len(lab.good_obstruction_positions - lab.invalid_obstruction_positions))
-
-#5208 all looping incl visible to guard
-#5174 all looping except guard spawn + what's in front before turning first time
-# so I guess it's rectangular loops only like in the example??
+print(len(lab.good_obstruction_positions))
