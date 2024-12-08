@@ -1,6 +1,6 @@
 import re
 import time
-from random import shuffle
+from math import log10
 
 filename = "5/input.txt"
 #filename = "5/testinput.txt"
@@ -33,13 +33,6 @@ def process_rules():
 
 def page_order_correct(update):
     for p in range(0,len(update)):
-        # if p > 0:
-        #     for update_page in update[:p]:
-        #         #print(f"is {update_page} from {update[:p]} in list of pages that should come after it: {after[update[p]]}")
-        #         #print(f"og uprate: {update}\nshiterate: {update[:p] + [update[p]] + update[p+1:]}")
-        #         if update_page in after[update[p]]:
-        #             print(f"page {update_page} should come after {update[p]}: {sorted(after[update[p]])}\nupdate: {update}")
-        #             return False
         if p < len(update)-1:
             for update_page in update[p+1:]:
                 if update_page in before[update[p]]:
@@ -51,23 +44,29 @@ def incorrect_updates_get():
     midpagesum = 0
     n = 1
     for update in updates:
-        if len(update)%2 != 0:
-            if not page_order_correct(update):
-                corrected = correct_page_order(update,n)
-                midpagesum += int(corrected[len(corrected)//2])
-                n+=1
+        operations = 0
+        if len(update)%2 != 0 and not page_order_correct(update):
+            while not page_order_correct(update):
+                update = correct_page_order(update,n)
+                operations += 1
+            midpagesum += int(update[len(update)//2])
+            n+=1
 
+            nose = int(log10(n*operations))*"-"
+            print(f"got it! :{nose}D")
     return midpagesum
 
 def correct_page_order(update,n):
-    shuffle(update)
-    shuffled = 1
-    while not page_order_correct(update):
-        shuffle(update)
-        shuffled+=1
-    nose = n*shuffled*"-"
-    print(f"got it! :{nose}D")
-    print(f"shuffled {shuffled} time(s)")
+    for p in range(0,len(update)):
+        if p < len(update)-1:
+            #for update_page in update[p+1:]:
+            for i in range(p+1, len(update)):
+                update_page = update[i]
+                if update_page in before[update[p]]:
+                    print(f"page {update_page} (index {p}) should come before {update[p]}: ({before[update[p]]})")
+                    # switch indexes of update_page (update[p+n]) and update[p]:
+                    update[i], update[p] = update[p], update[i]
+    
     return update
 
 def main():
@@ -80,4 +79,3 @@ def main():
 started = time.process_time_ns()
 main()
 print((time.process_time_ns() - started)/1000/1000, " ms")
-#4354 2low
